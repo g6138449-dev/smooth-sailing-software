@@ -50,7 +50,7 @@ export function AqiHero({ bundle }: { bundle: DataBundle }) {
           <Metric label="Boundary layer" value={`${Math.round(current.weather.pblHeight)} m`} />
           <Metric label="Rainfall" value={`${current.weather.rainfall.toFixed(1)} mm/h`} />
           <Metric label="Pressure" value={`${Math.round(current.weather.pressure)} hPa`} />
-          <Metric label="Stability" value={current.weather.stability} />
+          <Metric label="Stability" value={`${current.weather.stability.charAt(0).toUpperCase()}${current.weather.stability.slice(1)}`} />
         </dl>
       </div>
     </Card>
@@ -61,7 +61,7 @@ function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <dt className="text-xs uppercase tracking-wide text-muted-foreground">{label}</dt>
-      <dd className="font-num mt-0.5 text-base capitalize text-foreground">{value}</dd>
+      <dd className="font-num mt-0.5 text-base text-foreground">{value}</dd>
     </div>
   );
 }
