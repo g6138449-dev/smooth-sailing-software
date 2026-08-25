@@ -61,7 +61,7 @@ function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <dt className="text-xs uppercase tracking-wide text-muted-foreground">{label}</dt>
-      <dd className="font-num mt-0.5 text-base capitalize text-foreground">{value}</dd>
+      <dd className="font-num mt-0.5 text-base text-foreground">{value}</dd>
     </div>
   );
 }
