@@ -150,6 +150,22 @@ export function TrendChart({
               connectNulls
               dot={false}
             />
+            {marker && (
+              <ReferenceDot
+                x={marker.horizonHours === 0 ? (last?.ts ?? marker.timestamp) : marker.timestamp}
+                y={marker.pm25}
+                r={6}
+                fill="var(--color-chart-3)"
+                stroke="var(--color-foreground)"
+                strokeWidth={2}
+                label={{
+                  value: horizonLabel(marker.horizonHours),
+                  position: "top",
+                  fontSize: 10,
+                  fill: "var(--color-foreground)",
+                }}
+              />
+            )}
           </AreaChart>
         </ResponsiveContainer>
       </div>
