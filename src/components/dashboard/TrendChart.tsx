@@ -107,6 +107,29 @@ export function TrendChart({
               strokeDasharray="4 4"
               label={{ value: "guideline", fontSize: 10, fill: "var(--color-muted-foreground)" }}
             />
+            {last && (
+              <ReferenceArea
+                x1={last.ts}
+                x2={forecastEnd}
+                fill="var(--color-chart-3)"
+                fillOpacity={0.06}
+                label={{
+                  value: "FORECAST",
+                  position: "insideTopRight",
+                  fontSize: 10,
+                  fill: "var(--color-muted-foreground)",
+                }}
+              />
+            )}
+            {last && (
+              <ReferenceLine
+                x={last.ts}
+                stroke="var(--color-muted-foreground)"
+                strokeDasharray="3 3"
+                label={{ value: "now", fontSize: 10, fill: "var(--color-muted-foreground)" }}
+              />
+            )}
+
             <Area
               type="monotone"
               dataKey="observed"
