@@ -1,6 +1,7 @@
 import { pm25ToAqi, aqiCategory, riskFromAqi, MODEL_VERSION } from "./aqi";
 import { computeCoupling, couplingInputFromWeather, buildExplanations } from "./coupling";
 import type {
+  DataBundle,
   ForecastPoint,
   NcrLocation,
   WeatherObservation,
@@ -149,4 +150,66 @@ export function pointAtHorizon(points: ForecastPoint[], hours: number): Forecast
     if (Math.abs(p.horizonHours - hours) < Math.abs(best.horizonHours - hours)) best = p;
   }
   return best;
+}
+
+/** Selectable horizons exposed in the UI. 0 = current observation. */
+export const FORECAST_HORIZONS = [0, 6, 12, 24, 48, 72] as const;
+
+export function horizonLabel(hours: number): string {
+  return hours === 0 ? "NOW" : `+${hours}h`;
+}
+
+/** Deterministic 0-100 risk score blending AQI severity with coupling state. */
+export function riskScore(aqi: number, accumulationPotential: number): number {
+  return Math.round(clamp(aqi / 5 * 0.75 + accumulationPotential * 0.25, 0, 100));
+}
+
+/**
+ * Resolve the record for a selected horizon.
+ * 0 → the current observation expressed as a forecast point,
+ * otherwise the hourly forecast record for that hour.
+ */
+export function recordAtHorizon(bundle: DataBundle, hours: number): ForecastPoint {
+  if (hours <= 0) {
+    const { aq, weather, risk } = bundle.current;
+    return {
+      horizonHours: 0,
+      timestamp: weather.timestamp,
+      pm25: aq.pm25,
+      pm10: aq.pm10,
+      no2: aq.no2,
+      o3: aq.o3,
+      aqi: aq.aqi,
+      category: aq.category,
+      risk,
+      confidence: 100,
+      factors: bundle.coupling.explanations,
+    };
+  }
+  return pointAtHorizon(bundle.forecast, hours);
+}
+
+/** Plain-language explanation of a selected forecast record. */
+export function forecastNarrative(bundle: DataBundle, point: ForecastPoint): string {
+  const observed = bundle.current.aq.pm25;
+  const delta = point.pm25 - observed;
+  const dir =
+    Math.abs(delta) < 4
+      ? "hold close to current levels"
+      : delta > 0
+        ? `rise by about ${Math.round(delta)} µg/m³`
+        : `fall by about ${Math.round(-delta)} µg/m³`;
+
+  if (point.horizonHours === 0) {
+    return `Current observation for ${bundle.location.name}: PM2.5 ${observed} µg/m³, AQI ${bundle.current.aq.aqi} (${bundle.current.aq.category}). ${bundle.coupling.chain.map((c) => c.step).join(" → ")}`;
+  }
+
+  const drivers = point.factors
+    .slice()
+    .sort((a, b) => Math.abs(b.impact) - Math.abs(a.impact))
+    .slice(0, 2)
+    .map((f) => `${f.label.toLowerCase()} (${f.value})`)
+    .join(" and ");
+
+  return `At +${point.horizonHours} h PM2.5 is expected to ${dir}, giving AQI ${point.aqi} (${point.category}) and risk ${point.risk}. The dominant drivers are ${drivers}. Confidence ${point.confidence}% — it declines with horizon length under the ${bundle.scenario.name.toLowerCase()} scenario.`;
 }

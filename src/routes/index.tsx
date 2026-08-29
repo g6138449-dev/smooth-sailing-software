@@ -54,6 +54,7 @@ function Index() {
   const [locationId, setLocationId] = useState("ncr");
   const [scenario, setScenario] = useState<ScenarioKey>("normal");
   const [range, setRange] = useState<TimeRangeKey>("24h");
+  const [horizon, setHorizon] = useState(24);
   const [tick, setTick] = useState(0);
 
   // Refresh the demo feed on a fixed cadence, like an operations console.
@@ -175,8 +176,12 @@ function Index() {
               </TabsContent>
 
               <TabsContent value="forecast" className="mt-4 space-y-4">
-                <ForecastPanel points={bundle.forecast} />
-                <TrendChart bundle={bundle} hours={hours} />
+                <ForecastPanel
+                  bundle={bundle}
+                  horizon={horizon}
+                  onHorizonChange={setHorizon}
+                />
+                <TrendChart bundle={bundle} hours={hours} horizon={horizon} />
                 <div className="flex justify-end">
                   <Button
                     variant="outline"
