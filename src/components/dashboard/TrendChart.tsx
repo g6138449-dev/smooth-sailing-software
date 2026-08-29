@@ -3,6 +3,8 @@ import {
   AreaChart,
   CartesianGrid,
   Line,
+  ReferenceArea,
+  ReferenceDot,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -11,9 +13,19 @@ import {
 } from "recharts";
 import { Card } from "@/components/ui/card";
 import { fmtTime } from "@/lib/format";
+import { recordAtHorizon, horizonLabel } from "@/lib/forecast";
 import type { DataBundle } from "@/lib/types";
 
-export function TrendChart({ bundle, hours }: { bundle: DataBundle; hours: number }) {
+export function TrendChart({
+  bundle,
+  hours,
+  horizon,
+}: {
+  bundle: DataBundle;
+  hours: number;
+  /** When set, the matching forecast point is highlighted on the chart. */
+  horizon?: number;
+}) {
   const history = bundle.aqHistory.slice(-hours).map((o) => ({
     ts: o.timestamp,
     observed: o.pm25,
@@ -28,6 +40,10 @@ export function TrendChart({ bundle, hours }: { bundle: DataBundle; hours: numbe
   if (last) last.predicted = last.observed;
   const data = [...history, ...forecast];
 
+  const nowTs = bundle.current.weather.timestamp;
+  const forecastEnd = forecast[forecast.length - 1]?.ts ?? nowTs;
+  const marker = horizon === undefined ? null : recordAtHorizon(bundle, horizon);
+
   return (
     <Card className="p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -38,6 +54,7 @@ export function TrendChart({ bundle, hours }: { bundle: DataBundle; hours: numbe
           <p className="text-xs text-muted-foreground">
             Last {hours} h of observations followed by the {bundle.forecast.length} h baseline
             forecast.
+            {marker ? ` Highlighted: ${horizonLabel(marker.horizonHours)} → ${marker.pm25} µg/m³.` : ""}
           </p>
         </div>
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
@@ -49,6 +66,7 @@ export function TrendChart({ bundle, hours }: { bundle: DataBundle; hours: numbe
           </span>
         </div>
       </div>
+
       <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 6, right: 8, bottom: 0, left: -12 }}>
